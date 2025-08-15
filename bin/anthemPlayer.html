@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anthem Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .play-button {
+            display: block;
+            width: 200px;
+            height: 60px;
+            margin: 20px auto;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .play-button:hover {
+            background-color: #0056b3;
+        }
+        .play-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .info {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .refresh-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Anthem Player</h1>
+        
+        <div class="refresh-info">
+            <strong>💡 Tip:</strong> To get fresh anthem data, run <code>node bin/anthemPlayer.js &lt;orgAlias&gt; &lt;opportunityId&gt;</code> in your terminal, then refresh this page.
+        </div>
+        
+        <div id="loading" class="loading">Loading anthem data...</div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <div id="player" style="display: none;">
+            <button id="playButton" class="play-button" onclick="handlePlay()">Play Anthem</button>
+            
+            <div class="info">
+                <h3>Anthem Data Summary:</h3>
+                <div id="dataInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load anthem data as JavaScript -->
+    <script src="./anthemData.js"></script>
+
+    <script>
+        // anthemData is now available globally from anthemData.js
+        
+        // Load the anthem data when the page loads
+        function loadAnthemData() {
+            try {
+                if (typeof anthemData === 'undefined') {
+                    throw new Error('Anthem data not loaded. Please run anthemPlayer.js first.');
+                }
+                
+                // Hide loading, show player
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('player').style.display = 'block';
+                
+                // Display data info
+                displayDataInfo();
+                
+                console.log('✅ Anthem data loaded successfully:', anthemData);
+                return anthemData;
+            } catch (error) {
+                console.error('❌ Failed to load anthem data:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = 
+                    '<strong>Failed to load anthem data:</strong> ' + error.message + 
+                    '<br><br><strong>Solution:</strong> Run <code>node bin/anthemPlayer.js &lt;orgAlias&gt; &lt;opportunityId&gt;</code> first to generate the data.';
+                throw error;
+            }
+        }
+        
+        function displayDataInfo() {
+            if (!anthemData || !anthemData.anthemData) return;
+            
+            const info = document.getElementById('dataInfo');
+            info.innerHTML = 
+                '<p><strong>Opportunity ID:</strong> ' + anthemData.opportunityId + '</p>' +
+                '<p><strong>Channel 1:</strong> ' + (anthemData.anthemData[0] ? anthemData.anthemData[0].length : 0) + ' values</p>' +
+                '<p><strong>Channel 2:</strong> ' + (anthemData.anthemData[1] ? anthemData.anthemData[1].length : 0) + ' values</p>' +
+                '<p><strong>Total Samples:</strong> ' + ((anthemData.anthemData[0] ? anthemData.anthemData[0].length : 0) + (anthemData.anthemData[1] ? anthemData.anthemData[1].length : 0)) + '</p>' +
+                '<p><em>Note: Full data is loaded for audio playback</em></p>';
+        }
+        
+        function handlePlay() {
+            if (!anthemData || !anthemData.anthemData) {
+                alert('No anthem data available');
+                return;
+            }
+            
+            const audioCtx = new AudioContext();
+            
+            // Create an empty three-second stereo buffer at the sample rate of the AudioContext
+            const myArrayBuffer = audioCtx.createBuffer(
+                2,
+                audioCtx.sampleRate * 3,
+                audioCtx.sampleRate,
+            );
+            
+            // Fill the buffer with anthem data values from the service
+            for (let channel = 0; channel < myArrayBuffer.numberOfChannels; channel++) {
+                // This gives us the actual array that contains the data
+                const nowBuffering = myArrayBuffer.getChannelData(channel);
+                console.log('Buffer length:', myArrayBuffer.length);
+                
+                // Use the anthem data from the service
+                const channelData = anthemData.anthemData[channel];
+                if (channelData && channelData.length > 0) {
+                    // Fill the buffer with the service data
+                    for (let i = 0; i < myArrayBuffer.length; i++) {
+                        // Cycle through the service data if it's shorter than the buffer
+                        nowBuffering[i] = channelData[i % channelData.length];
+                    }
+                } else {
+                    // Fallback to random values if no service data
+                    for (let i = 0; i < myArrayBuffer.length; i++) {
+                        nowBuffering[i] = Math.random() * 2 - 1;
+                    }
+                }
+            }
+            
+            // Get an AudioBufferSourceNode.
+            // This is the AudioNode to use when we want to play an AudioBuffer
+            const source = audioCtx.createBufferSource();
+            
+            // set the buffer in the AudioBufferSourceNode
+            source.buffer = myArrayBuffer;
+            
+            // connect the AudioBufferSourceNode to the
+            // destination so we can hear the sound
+            source.connect(audioCtx.destination);
+            
+            // start the source playing
+            source.start();
+            
+            console.log('🎵 Playing anthem audio...');
+        }
+        
+        // Load the data when the page loads
+        window.addEventListener('load', loadAnthemData);
+    </script>
+</body>
+</html>
