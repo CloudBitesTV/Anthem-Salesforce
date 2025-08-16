@@ -1,0 +1,86 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+components:
+  schemas:
+    AnthemGenerationRequest:
+      type: object
+      required:
+        - opportunityId
+      description: Request to generate an anthem, includes the opportunity ID to extract
+        region information
+      properties:
+        opportunityId:
+          type: string
+          description: A record Id for the opportunity
+    AnthemGenerationResponse:
+      type: object
+      description: Response includes the generated anthem data as a list of decimal lists.
+      properties:
+        anthemData:
+          type: array
+          description: List of decimal lists representing anthem audio data
+          items:
+            type: array
+            items:
+              type: number
+              description: Audio values between -1.0 and 1.0
+        opportunityId:
+          type: string
+          description: The opportunity ID used for generation
+paths:
+  /api/generateanthem:
+    post:
+      operationId: generateAnthem
+      summary: Generate an Anthem for a given Opportunity
+      tags:
+        - Anthem Engine
+      description: Generate anthem data based on opportunity region and characteristics.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnthemGenerationRequest"
+      x-sfdc:
+        heroku:
+          authorization:
+            connectedApp: GenerateAnthemConnectedApp
+            permissionSet: GenerateAnthemPermissions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthemGenerationResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                  message:
+                    type: string
+                    description: Error message when client context is missing or invalid
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: boolean
+                  message:
+                    type: string
+                    description: Error message when an unexpected error occurs
+servers:
+  - url: http://localhost:8080
+    description: Generated server url
+tags:
+  - name: Anthem Engine
+    description: Generate anthem data based on opportunity region and characteristics.
