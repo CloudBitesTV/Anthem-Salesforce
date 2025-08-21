@@ -139,6 +139,17 @@ sf org assign permset --name GenerateAnthemPermissions
 sf project deploy start
 ```
 
+**Important:** After deploying the metadata, you need to manually add the `anthemPlayer` Lightning Web Component to the Opportunity Detail page:
+
+1. Go to **Setup** → **Object Manager** → **Opportunity** → **Lightning Record Pages**
+2. Click on the **Opportunity Record Page** (usually the default)
+3. Click **Edit** to open the Lightning App Builder
+4. In the left sidebar, find **Custom** → **anthemPlayer** component
+5. Drag and drop it onto the page where you want it to appear
+6. Click **Save** and **Activate** to make the changes live
+
+The component will now appear on all Opportunity detail pages and allow users to generate and play anthem audio for each opportunity.
+
 ### Verify Deployment
 Confirm the app has started:
 ```bash
