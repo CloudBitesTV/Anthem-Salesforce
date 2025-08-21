@@ -18,8 +18,14 @@ This section covers setting up a local development environment to test the anthe
 # Create a new scratch org (and set as default)
 sf org create scratch --definition-file config/project-scratch-def.json --alias anthemorg --set-default
 
-# Import sample data (no metadata deploy needed for local testing)
-sf data import tree --plan data/import-plan.json
+# Import sample data using the data setup script
+./bin/data.sh
+
+# Note: The data.sh script automatically:
+# - Queries the standard price book ID and updates pricebook entries
+# - Imports all sample data (accounts, products, opportunities, etc.)
+# - Provides verification of the imported data
+# - Can be run with -cleanup flag to remove existing data first
 ```
 
 ### Running Locally
@@ -51,6 +57,25 @@ node bin/anthemPlayer.js anthemsf 006XXXXXXXXXXXXXXX
 
 **Note:** The anthemPlayer.js script generates a JavaScript file (`anthemData.js`) that contains the anthem data as a global variable. The HTML player loads this data via a script tag, so no HTTP server is required. You can open the HTML file directly in your browser and it will work immediately.
 
+### Data Management Script
+The `bin/data.sh` script provides a convenient way to manage sample data in your scratch org:
+
+**Usage:**
+```bash
+# Import all sample data (default behavior)
+./bin/data.sh
+
+# Clean up existing data before import
+./bin/data.sh -cleanup
+```
+
+**What it does:**
+- Automatically queries the standard price book ID and updates pricebook entries
+- Imports all sample data (accounts, products, opportunities, opportunity line items, pricebook entries)
+- Provides verification counts of imported data
+- Handles temporary file management and cleanup
+- Can optionally remove existing data before import
+
 ## Deployment
 
 This section covers deploying the anthem generation API to Heroku using Heroku AppLink. You'll create a Salesforce scratch org, deploy the Node.js application to Heroku, configure the AppLink integration, and finally deploy the Lightning Web Component to Salesforce. This creates a working system where Salesforce can securely invoke the anthem generation API.
@@ -60,8 +85,14 @@ This section covers deploying the anthem generation API to Heroku using Heroku A
 # Create a new scratch org (and set as default)
 sf org create scratch --definition-file config/project-scratch-def.json --alias anthemorg --set-default
 
-# Import sample data
-sf data import tree --plan data/import-plan.json
+# Import sample data using the data setup script
+./bin/data.sh
+
+# Note: The data.sh script automatically:
+# - Queries the standard price book ID and updates pricebook entries
+# - Imports all sample data (accounts, products, opportunities, etc.)
+# - Provides verification of the imported data
+# - Can be run with -cleanup flag to remove existing data first
 
 # Deploy the ManageHerokuAppLink permission set (required for Heroku CLI commands)
 sf project deploy start --metadata Permissionset

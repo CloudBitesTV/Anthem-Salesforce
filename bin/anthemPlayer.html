@@ -134,11 +134,23 @@
             if (!anthemData || !anthemData.anthemData) return;
             
             const info = document.getElementById('dataInfo');
+            const numberOfChannels = anthemData.anthemData.length;
+            
+            let channelInfo = '';
+            let totalSamples = 0;
+            
+            for (let i = 0; i < numberOfChannels; i++) {
+                const channelLength = anthemData.anthemData[i] ? anthemData.anthemData[i].length : 0;
+                const channelName = i === 0 ? 'Opportunity' : i === 1 ? 'Line Items' : i === 2 ? 'Account' : `Channel ${i + 1}`;
+                channelInfo += `<p><strong>${channelName}:</strong> ${channelLength} values</p>`;
+                totalSamples += channelLength;
+            }
+            
             info.innerHTML = 
                 '<p><strong>Opportunity ID:</strong> ' + anthemData.opportunityId + '</p>' +
-                '<p><strong>Channel 1:</strong> ' + (anthemData.anthemData[0] ? anthemData.anthemData[0].length : 0) + ' values</p>' +
-                '<p><strong>Channel 2:</strong> ' + (anthemData.anthemData[1] ? anthemData.anthemData[1].length : 0) + ' values</p>' +
-                '<p><strong>Total Samples:</strong> ' + ((anthemData.anthemData[0] ? anthemData.anthemData[0].length : 0) + (anthemData.anthemData[1] ? anthemData.anthemData[1].length : 0)) + '</p>' +
+                '<p><strong>Number of Channels:</strong> ' + numberOfChannels + '</p>' +
+                channelInfo +
+                '<p><strong>Total Samples:</strong> ' + totalSamples + '</p>' +
                 '<p><em>Note: Full data is loaded for audio playback</em></p>';
         }
         
@@ -150,32 +162,21 @@
             
             const audioCtx = new AudioContext();
             
-            // Create an empty three-second stereo buffer at the sample rate of the AudioContext
+            // Create buffer with the same dimensions as the service data (matching LWC approach)
+            const numberOfChannels = anthemData.anthemData.length;
+            const samplesPerChannel = anthemData.anthemData[0].length;        
             const myArrayBuffer = audioCtx.createBuffer(
-                2,
-                audioCtx.sampleRate * 3,
-                audioCtx.sampleRate,
+                numberOfChannels,
+                samplesPerChannel,
+                audioCtx.sampleRate
             );
-            
-            // Fill the buffer with anthem data values from the service
-            for (let channel = 0; channel < myArrayBuffer.numberOfChannels; channel++) {
-                // This gives us the actual array that contains the data
+
+            // Fill the buffer with the anthem data from the service (matching LWC approach)
+            for (let channel = 0; channel < numberOfChannels; channel++) {
                 const nowBuffering = myArrayBuffer.getChannelData(channel);
-                console.log('Buffer length:', myArrayBuffer.length);
-                
-                // Use the anthem data from the service
-                const channelData = anthemData.anthemData[channel];
-                if (channelData && channelData.length > 0) {
-                    // Fill the buffer with the service data
-                    for (let i = 0; i < myArrayBuffer.length; i++) {
-                        // Cycle through the service data if it's shorter than the buffer
-                        nowBuffering[i] = channelData[i % channelData.length];
-                    }
-                } else {
-                    // Fallback to random values if no service data
-                    for (let i = 0; i < myArrayBuffer.length; i++) {
-                        nowBuffering[i] = Math.random() * 2 - 1;
-                    }
+                const channelData = anthemData.anthemData[channel];            
+                for (let i = 0; i < samplesPerChannel; i++) {
+                    nowBuffering[i] = channelData[i];
                 }
             }
             
