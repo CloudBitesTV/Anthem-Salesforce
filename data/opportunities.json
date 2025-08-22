@@ -9,11 +9,13 @@
       "AccountId": "@AccountRef1",
       "StageName": "Prospecting",
       "Amount": 50000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-12-31",
       "Type": "New Customer",
       "Probability": 20,
       "LeadSource": "Web",
-      "Description": "Large enterprise software license for Acme Corporation"
+      "Description": "Large enterprise software license for Acme Corporation",
+      "NextStep": "Schedule product demonstration with technical team"
     },
     {
       "attributes": {
@@ -24,11 +26,13 @@
       "AccountId": "@AccountRef2",
       "StageName": "Qualification",
       "Amount": 75000,
+      "TotalOpportunityQuantity": 5,
       "CloseDate": "2024-11-30",
       "Type": "Existing Customer - Upgrade",
       "Probability": 40,
       "LeadSource": "Partner Referral",
-      "Description": "Equipment upgrade for Global Industries manufacturing facility"
+      "Description": "Equipment upgrade for Global Industries manufacturing facility",
+      "NextStep": "Conduct site survey and technical assessment"
     },
     {
       "attributes": {
@@ -39,11 +43,13 @@
       "AccountId": "@AccountRef3",
       "StageName": "Prospecting",
       "Amount": 25000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-10-31",
       "Type": "New Customer",
       "Probability": 15,
       "LeadSource": "Cold Call",
-      "Description": "Technology package for TechStart Solutions startup"
+      "Description": "Technology package for TechStart Solutions startup",
+      "NextStep": "Send proposal and pricing information"
     },
     {
       "attributes": {
@@ -54,11 +60,13 @@
       "AccountId": "@AccountRef4",
       "StageName": "Proposal/Price Quote",
       "Amount": 150000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-09-30",
       "Type": "Existing Customer - Replacement",
       "Probability": 70,
       "LeadSource": "Web",
-      "Description": "Complete healthcare system implementation for Healthcare Partners"
+      "Description": "Complete healthcare system implementation for Healthcare Partners",
+      "NextStep": "Present proposal to executive committee"
     },
     {
       "attributes": {
@@ -69,11 +77,13 @@
       "AccountId": "@AccountRef5",
       "StageName": "Negotiation/Review",
       "Amount": 200000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-08-31",
       "Type": "Existing Customer - Upgrade",
       "Probability": 85,
       "LeadSource": "Partner Referral",
-      "Description": "Advanced financial services platform upgrade"
+      "Description": "Advanced financial services platform upgrade",
+      "NextStep": "Finalize contract terms and legal review"
     },
     {
       "attributes": {
@@ -84,11 +94,13 @@
       "AccountId": "@AccountRef6",
       "StageName": "Prospecting",
       "Amount": 35000,
+      "TotalOpportunityQuantity": 10,
       "CloseDate": "2024-07-31",
       "Type": "New Customer",
       "Probability": 25,
       "LeadSource": "Web",
-      "Description": "Point of sale system for Retail Dynamics"
+      "Description": "Point of sale system for Retail Dynamics",
+      "NextStep": "Schedule discovery call with IT manager"
     },
     {
       "attributes": {
@@ -99,11 +111,13 @@
       "AccountId": "@AccountRef7",
       "StageName": "Closed Won",
       "Amount": 120000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-06-30",
       "Type": "Existing Customer - Upgrade",
       "Probability": 100,
       "LeadSource": "Web",
-      "Description": "Energy management solution for Energy Solutions"
+      "Description": "Energy management solution for Energy Solutions",
+      "NextStep": "Begin implementation planning"
     },
     {
       "attributes": {
@@ -114,11 +128,13 @@
       "AccountId": "@AccountRef8",
       "StageName": "Qualification",
       "Amount": 45000,
+      "TotalOpportunityQuantity": 500,
       "CloseDate": "2024-05-31",
       "Type": "New Customer",
       "Probability": 35,
       "LeadSource": "Cold Call",
-      "Description": "Educational software license for Education First"
+      "Description": "Educational software license for Education First",
+      "NextStep": "Conduct needs assessment with academic team"
     },
     {
       "attributes": {
@@ -129,11 +145,13 @@
       "AccountId": "@AccountRef9",
       "StageName": "Proposal/Price Quote",
       "Amount": 180000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-04-30",
       "Type": "Existing Customer - Upgrade",
       "Probability": 60,
       "LeadSource": "Partner Referral",
-      "Description": "Advanced logistics platform for Transportation Hub"
+      "Description": "Advanced logistics platform for Transportation Hub",
+      "NextStep": "Deliver technical proposal and ROI analysis"
     },
     {
       "attributes": {
@@ -144,11 +162,13 @@
       "AccountId": "@AccountRef10",
       "StageName": "Prospecting",
       "Amount": 80000,
+      "TotalOpportunityQuantity": 1,
       "CloseDate": "2024-03-31",
       "Type": "New Customer",
       "Probability": 30,
       "LeadSource": "Web",
-      "Description": "Consulting services contract for Consulting Experts"
+      "Description": "Consulting services contract for Consulting Experts",
+      "NextStep": "Schedule initial consultation meeting"
     }
   ]
 }

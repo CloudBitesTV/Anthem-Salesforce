@@ -5,23 +5,52 @@ const { ifft } = pkg;
 const ANTHEM_CONFIG = {
   // Fields to use for opportunity channel generation
   opportunityFields: [
-    'Amount',
-    'Probability',
-    'StageName',
-    'CloseDate',
-    'Type',
-    'LeadSource',
-    'Name'
+   'Name',
+  'AccountId',
+  'StageName',
+  'Amount',
+  'TotalOpportunityQuantity',
+  'CloseDate',
+  'Type',
+  'Probability',
+  'LeadSource',
+  'Description',
+  'NextStep'
   ],
   // Fields to use for account channel generation
   accountFields: [
     'Name',
+    'AccountNumber',
     'Industry',
     'Type',
+    'Rating',
+    'Ownership',
+    'AccountSource',
+    'Description',
+    'Site',
+    'Tradestyle',
+    'Phone',
+    'Fax',
+    'Website',
+    'BillingStreet',
     'BillingCity',
+    'BillingState',
+    'BillingPostalCode',
     'BillingCountry',
+    'ShippingStreet',
+    'ShippingCity',
+    'ShippingState',
+    'ShippingPostalCode',
+    'ShippingCountry',
+    'AnnualRevenue',
     'NumberOfEmployees',
-    'AnnualRevenue'
+    'YearStarted',
+    'Sic',
+    'SicDesc',
+    'NaicsCode',
+    'NaicsDesc',
+    'TickerSymbol',
+    'DunsNumber'
   ],
   // Fields to use for opportunity line items channel generation
   opportunityLineItemFields: [
@@ -32,6 +61,8 @@ const ANTHEM_CONFIG = {
     'ServiceDate'
   ]
 };
+
+const TOTAL_SAMPLES = 44100 * 3;
 
 /**
  * Generate anthem data for a given opportunity
@@ -54,7 +85,7 @@ export async function generateAnthem(request, client) {
 
     // Query the opportunity data
     const oppFields = ANTHEM_CONFIG.opportunityFields.join(', ');
-    const oppSoql = `SELECT Id, AccountId, ${oppFields} FROM Opportunity WHERE Id = '${opportunityId}'`;
+    const oppSoql = `SELECT Id, ${oppFields} FROM Opportunity WHERE Id = '${opportunityId}'`;
     const oppResult = await executeQuery(dataApi, oppSoql, 'opportunity');
     const opportunity = oppResult.records[0];
     logger.info(`Retrieved opportunity: ${opportunity.fields.Name}`);
@@ -81,20 +112,42 @@ export async function generateAnthem(request, client) {
     // Generate tuples for all channels
     const accountTuples = generateTuplesFromFields(accountFields, ANTHEM_CONFIG.accountFields);
     const opportunityTuples = generateTuplesFromFields(opportunity.fields, ANTHEM_CONFIG.opportunityFields);
-    for (const record of oliResult.records) {
-      const lineItemTuples = generateTuplesFromFields(record.fields, ANTHEM_CONFIG.opportunityLineItemFields);
-      opportunityLineItemTuples.push(...lineItemTuples);
-    }    
-    logger.info(`Generated ${opportunityTuples.length} opportunity tuples, ${accountTuples.length} account tuples, ${opportunityLineItemTuples.length} line item tuples`);
+    
+    // This defaults to haveing a single line item as the loop was blowing the stack
+    const lineItemTuples = generateTuplesFromFields(oliResult.records[0].fields, ANTHEM_CONFIG.opportunityLineItemFields);
+    logger.info(`Generated ${opportunityTuples.length} opportunity tuples, ${accountTuples.length} account tuples, ${lineItemTuples.length} line item tuples`);
+
+    // for (const record of oliResult.records) {
+    //   const lineItemTuples = generateTuplesFromFields(record.fields, ANTHEM_CONFIG.opportunityLineItemFields);
+    //   opportunityLineItemTuples.push(...lineItemTuples);
+    // }    
+    // logger.info(`Generated ${opportunityTuples.length} opportunity tuples, ${accountTuples.length} account tuples, ${opportunityLineItemTuples.length} line item tuples`);
 
     // Generate anthem data for three channels
     const anthemData = [
       generateChannelFromTuples(opportunityTuples),
-      generateChannelFromTuples(opportunityLineItemTuples),
+      generateChannelFromTuples(lineItemTuples),
+      // generateChannelFromTuples(opportunityLineItemTuples),
       generateChannelFromTuples(accountTuples)      
     ];
     logger.info(`Generated anthem with ${anthemData.length} channels, ${anthemData[0]?.length || 0} samples`);
 
+    //This is a hack to get the max and min values of the anthem data without using spread as it blows the call stack
+    let maxValue = 0;
+    let minValue = 0;
+
+    for(const anthem of anthemData) {
+      for(const sample of anthem) {
+        if(sample > maxValue) {
+          maxValue = sample;
+        }
+        if(sample < minValue) {
+          minValue = sample;
+        }
+      }
+    }
+    console.info(`Max value: ${maxValue}, Min value: ${minValue}`);
+    
     return { 
       anthemData,
       opportunityId: opportunityId
@@ -138,6 +191,7 @@ export async function generateAnthem(request, client) {
  */
 function generateTuplesFromFields(fields, fieldNames) {
   const tuples = [];
+  const samplesPerTuple = TOTAL_SAMPLES / fieldNames.length;
   
   for (const fieldName of fieldNames) {
     const fieldValue = fields[fieldName];
@@ -154,8 +208,11 @@ function generateTuplesFromFields(fields, fieldNames) {
         } else {
           // For strings and other types, use the length
           processedValue = String(fieldValue).length;
-        }        
-        tuples.push([fieldNameLength, processedValue]);
+        }
+        //Pad output for length to ensure we meet correct sample size
+        for(let i = 0; i < samplesPerTuple; i++) {
+          tuples.push([fieldNameLength, processedValue]);
+        }
       } catch (error) {
         console.warn(`Failed to process field ${fieldName}: ${error.message}`);
         tuples.push([fieldName.length, 0]);
@@ -188,15 +245,16 @@ function generateChannelFromTuples(tuples) {
   console.log('🔍 Debug: First few complex numbers:', paddedComplexNumbers.slice(0, 5));
   console.log('🔍 Debug: Array length:', paddedComplexNumbers.length);
   
-  // Apply inverse FFT to get raw output
-  const inverseFFTResults = ifft(paddedComplexNumbers).map(complex => complex[0]);
-  
-  // Debug: Log some sample values to see the range
-  const sampleValues = inverseFFTResults.slice(0, 10);
-  const maxValue = Math.max(...inverseFFTResults);
-  const minValue = Math.min(...inverseFFTResults);
-  console.info(`Inverse FFT output range: ${minValue.toFixed(4)} to ${maxValue.toFixed(4)}`);
-  console.info(`First 10 inverse FFT values:`, sampleValues.map(v => v.toFixed(4)));
+  // Apply inverse FFT to get raw output, then take the log of the real part to get our output tuples
+  const inverseFFTResults = ifft(paddedComplexNumbers).map(complex => {
+    if(complex[0] > 0) {
+      return Math.log(complex[0]);
+    } else if(complex[0] < 0) {
+      return -Math.log(-complex[0]);
+    } else {
+      return 0;
+    }
+  });
   
   // Return the raw FFT output - let the audio player handle normalization
   return inverseFFTResults;

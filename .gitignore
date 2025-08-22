@@ -55,3 +55,6 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# SFDX-Hardis
+config/user
