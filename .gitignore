@@ -58,3 +58,6 @@ $RECYCLE.BIN/
 
 # SFDX-Hardis
 config/user
+
+# ApexStubs generated files
+bin/apexstubs/downloads/

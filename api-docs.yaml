@@ -8,24 +8,19 @@ components:
       type: object
       required:
         - opportunityId
-      description: Request to generate an anthem, includes the opportunity ID to extract
-        region information
+      description: Request to generate an anthem, includes the opportunity ID to
+        extract region information
       properties:
         opportunityId:
           type: string
           description: A record Id for the opportunity
     AnthemGenerationResponse:
       type: object
-      description: Response includes the generated anthem data as a list of decimal lists.
+      description: Response includes the ContentVersion ID where the anthem data is stored.
       properties:
-        anthemData:
-          type: array
-          description: List of decimal lists representing anthem audio data
-          items:
-            type: array
-            items:
-              type: number
-              description: Audio values between -1.0 and 1.0
+        contentVersionId:
+          type: string
+          description: The ID of the ContentVersion record containing the anthem data
         opportunityId:
           type: string
           description: The opportunity ID used for generation

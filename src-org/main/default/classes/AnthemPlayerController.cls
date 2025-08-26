@@ -32,9 +32,9 @@ public with sharing class AnthemPlayerController {
                 // Convert the response to our internal format
                 AnthemResponse anthemResponse = new AnthemResponse();
                 anthemResponse.opportunityId = response.Code200.opportunityId;
-                anthemResponse.anthemData = response.Code200.anthemData;
+                anthemResponse.contentVersionId = response.Code200.contentVersionId;
                 anthemResponse.success = true;
-                anthemResponse.message = 'Anthem generated successfully';
+                anthemResponse.message = 'Anthem generated and stored as ContentVersion successfully';
                 
                 return anthemResponse;
             } else {
@@ -66,7 +66,7 @@ public with sharing class AnthemPlayerController {
      */
     public class AnthemResponse {
         @AuraEnabled public String opportunityId;
-        @AuraEnabled public List<List<Double>> anthemData;
+        @AuraEnabled public String contentVersionId;
         @AuraEnabled public Boolean success;
         @AuraEnabled public String message;
     }

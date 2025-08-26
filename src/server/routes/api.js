@@ -83,18 +83,11 @@ const apiRoutes = async (fastify) => {
   fastify.addSchema({
     $id: 'AnthemGenerationResponse',
     type: 'object',
-    description: 'Response includes the generated anthem data as a list of decimal lists.',
+    description: 'Response includes the ContentVersion ID where the anthem data is stored.',
     properties: {
-      anthemData: {
-        type: 'array',
-        description: 'List of decimal lists representing anthem audio data',
-        items: {
-          type: 'array',
-          items: {
-            type: 'number',
-            description: 'Audio values between -1.0 and 1.0'
-          }
-        }
+      contentVersionId: {
+        type: 'string',
+        description: 'The ID of the ContentVersion record containing the anthem data'
       },
       opportunityId: {
         type: 'string',

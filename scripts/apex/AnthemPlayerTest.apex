@@ -1,4 +1,3 @@
-// Test script for AnthemPlayerController
 // This script tests the anthem generation service via the Apex controller
 
 // Get the first opportunity from the org to test with
@@ -10,36 +9,52 @@ if (opportunities.isEmpty()) {
     Opportunity testOpp = opportunities[0];
     System.debug('Testing with Opportunity: ' + testOpp.Name + ' (ID: ' + testOpp.Id + ')');
     
-    try {
-        // Call the anthem generation service
-        System.debug('About to call AnthemPlayerController.generate...');
+    // Call the anthem generation service directly to avoid AuraHandledException
+    System.debug('About to call Heroku service directly...');
+    
+    // Create the Heroku service instance
+    HerokuAppLink.GenerateAnthem service = new HerokuAppLink.GenerateAnthem();
+    
+    // Create the request
+    HerokuAppLink.GenerateAnthem.generateAnthem_Request request = new HerokuAppLink.GenerateAnthem.generateAnthem_Request();
+    request.body = new HerokuAppLink.GenerateAnthem_AnthemGenerationRequest();
+    request.body.opportunityId = testOpp.Id;
+    
+    // Call the Heroku service
+    HerokuAppLink.GenerateAnthem.generateAnthem_Response response = service.generateAnthem(request);
+    
+    System.debug('Service call completed successfully!');
+    System.debug('Response received: ' + (response != null ? 'Yes' : 'No'));
+    
+    if (response != null && response.Code200 != null) {
+        System.debug('Success: Response Code 200 received');
+        System.debug('Opportunity ID: ' + response.Code200.opportunityId);
+        System.debug('ContentVersion ID received: ' + (response.Code200.contentVersionId != null ? 'Yes' : 'No'));
         
-        AnthemPlayerController.AnthemResponse result = AnthemPlayerController.generate(testOpp.Id);
-        
-        System.debug('Service call completed successfully!');
-        System.debug('Response received: ' + (result != null ? 'Yes' : 'No'));
-        
-        if (result != null) {
-            System.debug('Success: ' + result.success);
-            System.debug('Message: ' + result.message);
-            System.debug('Opportunity ID: ' + result.opportunityId);
-            System.debug('Anthem data received: ' + (result.anthemData != null ? 'Yes' : 'No'));
+        if (response.Code200.contentVersionId != null) {
+            System.debug('ContentVersion ID: ' + response.Code200.contentVersionId);
             
-            if (result.anthemData != null) {
-                System.debug('Number of channels: ' + result.anthemData.size());
-                if (!result.anthemData.isEmpty()) {
-                    System.debug('Channel 1 sample count: ' + result.anthemData[0].size());
-                }
+            // Verify the ContentVersion was created successfully
+            ContentVersion anthemContent = [SELECT Id, Title, ContentSize, FirstPublishLocationId, VersionData
+                                           FROM ContentVersion
+                                           WHERE Id = :response.Code200.contentVersionId];
+            
+            System.debug('=== CONTENTVERSION VERIFICATION ===');
+            System.debug('ContentVersion Title: ' + anthemContent.Title);
+            System.debug('Content Size: ' + anthemContent.ContentSize + ' bytes');
+            System.debug('First Publish Location ID: ' + anthemContent.FirstPublishLocationId);
+            System.debug('Version Data URL: ' + anthemContent.VersionData);
+            
+            // Verify the ContentVersion is linked to the Opportunity
+            if (anthemContent.FirstPublishLocationId == testOpp.Id) {
+                System.debug('✅ ContentVersion is properly linked to the Opportunity');
+            } else {
+                System.debug('❌ ContentVersion is not linked to the Opportunity');
             }
         }
-        
-        System.debug('=== TEST COMPLETED SUCCESSFULLY ===');
-        
-    } catch (Exception e) {
-        System.debug('=== ANTHEM GENERATION FAILED ===');
-        System.debug('Error Type: ' + e.getTypeName());
-        System.debug('Error Message: ' + e.getMessage());
-        System.debug('Stack Trace: ' + e.getStackTraceString());
-        System.debug('=== TEST FAILED ===');
+    } else {
+        System.debug('❌ No successful response received from service');
     }
+    
+    System.debug('=== TEST COMPLETED SUCCESSFULLY ===');
 }

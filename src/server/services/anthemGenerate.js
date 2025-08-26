@@ -111,31 +111,22 @@ export async function generateAnthem(request, client) {
     
     // Generate tuples for all channels
     const accountTuples = generateTuplesFromFields(accountFields, ANTHEM_CONFIG.accountFields);
-    const opportunityTuples = generateTuplesFromFields(opportunity.fields, ANTHEM_CONFIG.opportunityFields);
-    
+    const opportunityTuples = generateTuplesFromFields(opportunity.fields, ANTHEM_CONFIG.opportunityFields);    
     // This defaults to haveing a single line item as the loop was blowing the stack
     const lineItemTuples = generateTuplesFromFields(oliResult.records[0].fields, ANTHEM_CONFIG.opportunityLineItemFields);
     logger.info(`Generated ${opportunityTuples.length} opportunity tuples, ${accountTuples.length} account tuples, ${lineItemTuples.length} line item tuples`);
-
-    // for (const record of oliResult.records) {
-    //   const lineItemTuples = generateTuplesFromFields(record.fields, ANTHEM_CONFIG.opportunityLineItemFields);
-    //   opportunityLineItemTuples.push(...lineItemTuples);
-    // }    
-    // logger.info(`Generated ${opportunityTuples.length} opportunity tuples, ${accountTuples.length} account tuples, ${opportunityLineItemTuples.length} line item tuples`);
 
     // Generate anthem data for three channels
     const anthemData = [
       generateChannelFromTuples(opportunityTuples),
       generateChannelFromTuples(lineItemTuples),
-      // generateChannelFromTuples(opportunityLineItemTuples),
       generateChannelFromTuples(accountTuples)      
     ];
     logger.info(`Generated anthem with ${anthemData.length} channels, ${anthemData[0]?.length || 0} samples`);
 
-    //This is a hack to get the max and min values of the anthem data without using spread as it blows the call stack
+    // This is a hack to get the max and min values of the anthem data without using spread as it blows the call stack
     let maxValue = 0;
     let minValue = 0;
-
     for(const anthem of anthemData) {
       for(const sample of anthem) {
         if(sample > maxValue) {
@@ -147,16 +138,40 @@ export async function generateAnthem(request, client) {
       }
     }
     console.info(`Max value: ${maxValue}, Min value: ${minValue}`);
-    
-    return { 
-      anthemData,
-      opportunityId: opportunityId
-    };
+        
+    try {
+      // JSON data to store in the ContentVersion
+      const attachmentData = {
+        opportunityId: opportunityId,
+        anthemData: anthemData
+      };
+      // Create ContentVersion record to store the anthem data
+      const contentVersionRecord = {
+        type: 'ContentVersion',
+        fields: {
+          Title: `Anthem_${opportunityId}.json`,
+          PathOnClient: `Anthem_${opportunityId}.json`,
+          FirstPublishLocationId: opportunityId
+        },
+        binaryFields: {
+          VersionData: Buffer.from(JSON.stringify(attachmentData, null, 2))
+        }
+      };    
+      // Create ContentVersion record to store the anthem data
+      const contentVersionResult = await dataApi.create(contentVersionRecord);
+      logger.info(`Successfully created ContentVersion with ID: ${contentVersionResult.id}`);      
+      return {
+        contentVersionId: contentVersionResult.id,
+        opportunityId: opportunityId
+      };
+    } catch (contentVersionError) {
+      logger.error(`Failed to create ContentVersion: ${contentVersionError.message}`);
+      throw new Error(`Failed to store anthem data as attachment: ${contentVersionError.message}`);
+    }
   } catch (error) {
     if (error.statusCode) {
       throw error; // Preserve custom errors with status codes
     }
-
     console.error('Unexpected error generating anthem:', error);
     const wrappedError = new Error(`An unexpected error occurred: ${error.message}`);
     wrappedError.statusCode = 500;

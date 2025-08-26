@@ -87,9 +87,9 @@ async function processResult(result) {
         console.log(`📏 JSON response length: ${jsonString.length} characters`);
         
         // Parse the JSON to validate it
-        let anthemData;
+        let responseData;
         try {
-            anthemData = JSON.parse(jsonString);
+            responseData = JSON.parse(jsonString);
             console.log('✅ JSON parsed successfully');
         } catch (parseError) {
             console.error('❌ Failed to parse JSON:', parseError.message);
@@ -97,32 +97,70 @@ async function processResult(result) {
             throw new Error('Failed to parse JSON response');
         }
         
-        // Save the anthem data to a JavaScript file
-        const jsFilePath = join(__dirname, 'anthemData.js');
-        const jsContent = `var anthemData = ${JSON.stringify(anthemData, null, 2)};`;
-        writeFileSync(jsFilePath, jsContent);
-        console.log(`💾 Anthem data saved to: ${jsFilePath}`);
+        // Check if we have the new ContentVersion response format
+        if (responseData.contentVersionId && responseData.opportunityId) {
+            console.log('📎 ContentVersion response detected');
+            console.log(`   ContentVersion ID: ${responseData.contentVersionId}`);
+            console.log(`   Opportunity ID: ${responseData.opportunityId}`);
+            
+            // Download the ContentVersion content
+            console.log('⬇️  Downloading ContentVersion content...');
+            const anthemData = await downloadContentVersion(responseData.contentVersionId);
+            
+            // Save the anthem data to a JavaScript file
+            const jsFilePath = join(__dirname, 'anthemData.js');
+            const jsContent = `var anthemData = ${JSON.stringify(anthemData, null, 2)};`;
+            writeFileSync(jsFilePath, jsContent);
+            console.log(`💾 Anthem data saved to: ${jsFilePath}`);
 
-        console.log('📊 Anthem Data Analysis:');
-        console.log(`   Opportunity ID: ${anthemData.opportunityId}`);
-        console.log(`   Number of channels: ${anthemData.anthemData.length}`);
+            console.log('📊 Anthem Data Analysis:');
+            console.log(`   Opportunity ID: ${anthemData.opportunityId}`);
+            console.log(`   Number of channels: ${anthemData.anthemData.length}`);
 
-        anthemData.anthemData.forEach((channel, index) => {
-            console.log(`   Channel ${index + 1}: ${channel.length} values`);
-            const sampleSize = Math.min(1000, channel.length);
-            const sample = channel.slice(0, sampleSize);
-            const sampleMin = Math.min(...sample);
-            const sampleMax = Math.max(...sample);
-            const sampleAvg = sample.reduce((a, b) => a + b, 0) / sample.length;
-            console.log(`     Sample range (first ${sampleSize}): ${sampleMin.toFixed(4)} to ${sampleMax.toFixed(4)}`);
-            console.log(`     Sample average: ${sampleAvg.toFixed(4)}`);
-            console.log(`     First 5 values: [${channel.slice(0, 5).map(v => v.toFixed(4)).join(', ')}]`);
-            console.log(`     Last 5 values: [${channel.slice(-5).map(v => v.toFixed(4)).join(', ')}]`);
-        });
+            anthemData.anthemData.forEach((channel, index) => {
+                console.log(`   Channel ${index + 1}: ${channel.length} values`);
+                const sampleSize = Math.min(1000, channel.length);
+                const sample = channel.slice(0, sampleSize);
+                const sampleMin = Math.min(...sample);
+                const sampleMax = Math.max(...sample);
+                const sampleAvg = sample.reduce((a, b) => a + b, 0) / sample.length;
+                console.log(`     Sample range (first ${sampleSize}): ${sampleMin.toFixed(4)} to ${sampleMax.toFixed(4)}`);
+                console.log(`     Sample average: ${sampleAvg.toFixed(4)}`);
+                console.log(`     First 5 values: [${channel.slice(0, 5).map(v => v.toFixed(4)).join(', ')}]`);
+                console.log(`     Last 5 values: [${channel.slice(-5).map(v => v.toFixed(4)).join(', ')}]`);
+            });
+        } else {
+            // Fallback to old direct anthem data format
+            console.log('📊 Direct anthem data response detected');
+            const anthemData = responseData;
+            
+            // Save the anthem data to a JavaScript file
+            const jsFilePath = join(__dirname, 'anthemData.js');
+            const jsContent = `var anthemData = ${JSON.stringify(anthemData, null, 2)};`;
+            writeFileSync(jsFilePath, jsContent);
+            console.log(`💾 Anthem data saved to: ${jsFilePath}`);
+
+            console.log('📊 Anthem Data Analysis:');
+            console.log(`   Opportunity ID: ${anthemData.opportunityId}`);
+            console.log(`   Number of channels: ${anthemData.anthemData.length}`);
+
+            anthemData.anthemData.forEach((channel, index) => {
+                console.log(`   Channel ${index + 1}: ${channel.length} values`);
+                const sampleSize = Math.min(1000, channel.length);
+                const sample = channel.slice(0, sampleSize);
+                const sampleMin = Math.min(...sample);
+                const sampleMax = Math.max(...sample);
+                const sampleAvg = sample.reduce((a, b) => a + b, 0) / sample.length;
+                console.log(`     Sample range (first ${sampleSize}): ${sampleMin.toFixed(4)} to ${sampleMax.toFixed(4)}`);
+                console.log(`     Sample average: ${sampleAvg.toFixed(4)}`);
+                console.log(`     First 5 values: [${channel.slice(0, 5).map(v => v.toFixed(4)).join(', ')}]`);
+                console.log(`     Last 5 values: [${channel.slice(-5).map(v => v.toFixed(4)).join(', ')}]`);
+            });
+        }
 
         console.log('\n🎉 Anthem data updated successfully!');
         console.log('📁 Files:');
-        console.log(`   - ${jsFilePath} (updated with anthem data)`);
+        console.log(`   - ${join(__dirname, 'anthemData.js')} (updated with anthem data)`);
         console.log(`   - ${join(__dirname, 'anthemPlayer.html')} (static)`);
         console.log('\n🚀 Next steps:');
         console.log('   1. Opening anthemPlayer.html in your browser...');
@@ -153,6 +191,65 @@ async function processResult(result) {
     } catch (error) {
         console.error('❌ Error:', error.message);
         process.exit(1);
+    }
+}
+
+async function downloadContentVersion(contentVersionId) {
+    try {
+        // Get org info to get access token and instance URL
+        const { execSync } = await import('child_process');
+        
+        // Get the current org info
+        const orgInfo = execSync('sf org display --json', { encoding: 'utf8' });
+        const orgData = JSON.parse(orgInfo);
+        
+        const accessToken = orgData.result.accessToken;
+        const instanceUrl = orgData.result.instanceUrl;
+        
+        console.log(`🔗 Using Salesforce instance: ${instanceUrl}`);
+        
+        // First, get the ContentVersion record to find the VersionData URL
+        const versionResponse = await fetch(`${instanceUrl}/services/data/v64.0/sobjects/ContentVersion/${contentVersionId}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!versionResponse.ok) {
+            throw new Error(`Failed to get ContentVersion: ${versionResponse.status} ${versionResponse.statusText}`);
+        }
+        
+        const versionData = await versionResponse.json();
+        console.log(`📄 ContentVersion: ${versionData.Title} (${versionData.ContentSize} bytes)`);
+        
+        // Download the actual content using the VersionData URL
+        const contentResponse = await fetch(`${instanceUrl}${versionData.VersionData}`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        
+        if (!contentResponse.ok) {
+            throw new Error(`Failed to download content: ${contentResponse.status} ${contentResponse.statusText}`);
+        }
+        
+        const content = await contentResponse.text();
+        console.log(`✅ Downloaded ${content.length} characters of content`);
+        
+        // Parse the JSON content to extract anthem data
+        const contentData = JSON.parse(content);
+        
+        if (!contentData.anthemData || !contentData.opportunityId) {
+            throw new Error('Downloaded content does not contain valid anthem data structure');
+        }
+        
+        console.log(`🎵 Extracted anthem data: ${contentData.anthemData.length} channels`);
+        return contentData;
+        
+    } catch (error) {
+        console.error('❌ Error downloading ContentVersion:', error.message);
+        throw error;
     }
 }
 
