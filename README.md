@@ -170,6 +170,14 @@ This script will:
 - Confirm the service integration is working correctly
 - Show sample counts and data validation
 
+### Verify Heroku App Integration
+Open the Heroku Apps page in Salesforce Setup to confirm your application has been imported:
+```bash
+sf org open --path "/lightning/setup/HerokuApps/home"
+```
+
+This will open your org and navigate directly to the Heroku Apps section where you can see your deployed application and verify the integration status.
+
 ## Technical Information
 
 - The `api.js` file contains OpenAPI schema extensions that tie the deployed operation to the specific connected app and permission set names specified when running the `salesforce:publish` command.
