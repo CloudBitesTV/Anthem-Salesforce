@@ -1,6 +1,3 @@
-import pkg from 'fft-js';
-const { ifft } = pkg;
-
 // Inline configuration
 const ANTHEM_CONFIG = {
   // Fields to use for opportunity channel generation
@@ -62,7 +59,7 @@ const ANTHEM_CONFIG = {
   ]
 };
 
-const TOTAL_SAMPLES = 44100 * 3;
+const TOTAL_SAMPLES = 44100 * 5;
 
 /**
  * Generate anthem data for a given opportunity
@@ -206,7 +203,8 @@ export async function generateAnthem(request, client) {
  */
 function generateTuplesFromFields(fields, fieldNames) {
   const tuples = [];
-  const samplesPerTuple = TOTAL_SAMPLES / fieldNames.length;
+  const samplesPerTuple = Math.floor((TOTAL_SAMPLES / fieldNames.length)/750);
+  console.log(`🔍 Debug: Generating tuples for ${fieldNames.length} fields, ${samplesPerTuple} samples per tuple`);
   
   for (const fieldName of fieldNames) {
     const fieldValue = fields[fieldName];
@@ -233,7 +231,15 @@ function generateTuplesFromFields(fields, fieldNames) {
         tuples.push([fieldName.length, 0]);
       }
     }
-  }  
+  } 
+  const startingLength = tuples.length;
+  if(startingLength < TOTAL_SAMPLES) {
+    const additional = TOTAL_SAMPLES - startingLength;
+    for(let i = 0; i < additional; i++) {
+      tuples.push(tuples[i]);
+    }
+  }
+  
   return tuples;
 }
 
@@ -243,34 +249,27 @@ function generateTuplesFromFields(fields, fieldNames) {
  * @returns {Array<number>} Array of audio samples for the channel
  */
 function generateChannelFromTuples(tuples) {
-  // Convert tuples directly to complex numbers for FFT
-  // Each tuple [fieldNameLength, fieldValue] becomes [fieldNameLength, fieldValue]
-  const complexNumbers = tuples.map(tuple => [tuple[0], tuple[1]]);
-  
-  // Pad with zeros to reach a power-of-2 length for FFT
-  const targetLength = Math.pow(2, Math.ceil(Math.log2(Math.max(complexNumbers.length, 64))));
-  console.log('🔍 Debug: Target FFT length (power of 2):', targetLength);
-  
-  const paddedComplexNumbers = [...complexNumbers];
-  for (let i = complexNumbers.length; i < targetLength; i++) {
-    paddedComplexNumbers.push([0, 0]);
-  }
-  
-  // Debug: Check the structure of our complex numbers
-  console.log('🔍 Debug: First few complex numbers:', paddedComplexNumbers.slice(0, 5));
-  console.log('🔍 Debug: Array length:', paddedComplexNumbers.length);
-  
-  // Apply inverse FFT to get raw output, then take the log of the real part to get our output tuples
-  const inverseFFTResults = ifft(paddedComplexNumbers).map(complex => {
-    if(complex[0] > 0) {
-      return Math.log(complex[0]);
-    } else if(complex[0] < 0) {
-      return -Math.log(-complex[0]);
-    } else {
-      return 0;
-    }
+  const inverseFFTResults = tuples.map((complex, index) => {
+    return Math.sin(complex[0]) + Math.cos(complex[1]);
   });
   
   // Return the raw FFT output - let the audio player handle normalization
-  return inverseFFTResults;
+  return smooth(inverseFFTResults, 0.75);
+}
+
+
+function avg(vector) {
+  return vector.reduce((a,b) => a+b, 0)/vector.length;
+}
+
+function smooth(vector, variance) {
+  const v_avg = avg(vector); 
+
+  const smoothed = vector.map( (element, index) => {
+    const previous = index > 0 ? vector[index-1] : element;
+    const next = index < vector.length ? element : vector[i-1];
+    return avg([v_avg, avg([previous, element, next])]);
+  });
+
+  return smoothed;
 }
