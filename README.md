@@ -114,6 +114,9 @@ sf org generate password
 
 ### Deploy to Heroku
 ```bash
+# Remove any prior Heroku deployment configuration
+git remote remove heroku
+
 # Create Heroku app
 heroku create
 
