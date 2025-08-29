@@ -47,15 +47,23 @@ npm start
 ```
 
 ### Local Audio Testing
-To hear the anthem audio locally, you can use the anthemPlayer.js script which creates an HTML player:
+To hear the anthem audio locally, you can use the anthemPlayer.sh script which manages the webserver lifecycle and creates an HTML player:
 
 **Usage:**
 ```bash
-# Generate anthem data and open player (assumes local server is already running)
-node bin/anthemPlayer.js anthemsf 006XXXXXXXXXXXXXXX
+# Generate anthem data and open player (automatically manages webserver)
+./bin/anthemPlayer.sh anthemsf 006XXXXXXXXXXXXXXX
 ```
 
-**Note:** The anthemPlayer.js script generates a JavaScript file (`anthemData.js`) that contains the anthem data as a global variable. The HTML player loads this data via a script tag, so no HTTP server is required. You can open the HTML file directly in your browser and it will work immediately.
+**Note:** The anthemPlayer.sh script:
+- Automatically starts the Node.js server if not running
+- Kills any existing server on port 8080
+- Runs the anthem generation
+- Stops the server when complete
+- Generates a JavaScript file (`anthemData.js`) that contains the anthem data as a global variable
+- Opens the HTML player in your browser
+
+The HTML player loads this data via a script tag, so no HTTP server is required for playback. You can open the HTML file directly in your browser and it will work immediately.
 
 ### Data Management Script
 The `bin/data.sh` script provides a convenient way to manage sample data in your scratch org:

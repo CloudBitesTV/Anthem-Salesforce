@@ -61,8 +61,13 @@ function callService(orgAlias, opportunityId) {
                 resolve(stdout);
             } else {
                 console.error('❌ Service call failed with code:', code);
-                console.error('STDERR:', stderr);
-                reject(new Error(`Service call failed with code ${code}`));
+                if (stderr.trim()) {
+                    console.error('STDERR:', stderr);
+                }
+                if (stdout.trim()) {
+                    console.error('STDOUT:', stdout);
+                }
+                reject(new Error(`Service call failed with code ${code}: ${stderr || stdout}`));
             }
         });
         
