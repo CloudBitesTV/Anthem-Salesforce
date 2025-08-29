@@ -202,7 +202,7 @@ export async function generateAnthem(request, client) {
  */
 function generateTuplesFromFields(fields, fieldNames) {
   const tuples = [];
-  const samplesPerTuple = Math.floor((TOTAL_SAMPLES / fieldNames.length)/750);
+  const samplesPerTuple = Math.floor((TOTAL_SAMPLES / fieldNames.length)/1000);
   console.log(`🔍 Debug: Generating tuples for ${fieldNames.length} fields, ${samplesPerTuple} samples per tuple`);
   
   for (const fieldName of fieldNames) {
