@@ -1,4 +1,4 @@
-// This script tests the anthem generation service via the Apex controller
+// This script tests the anthem generation service via the AppLink generated Apex stubs
 
 // Get the first opportunity from the org to test with
 List<Opportunity> opportunities = [SELECT Id, Name FROM Opportunity LIMIT 1];
