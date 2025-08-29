@@ -43,7 +43,7 @@ npm start
 ### Testing the API
 ```bash
 # Test with Salesforce context (simulates real Salesforce calls)
-./bin/invoke.sh anthemsf '{"opportunityId": "006XXXXXXXXXXXXXXX"}'
+./bin/invoke.sh anthemorg '{"opportunityId": "006XXXXXXXXXXXXXXX"}'
 ```
 
 ### Local Audio Testing
@@ -52,7 +52,7 @@ To hear the anthem audio locally, you can use the anthemPlayer.sh script which m
 **Usage:**
 ```bash
 # Generate anthem data and open player (automatically manages webserver)
-./bin/anthemPlayer.sh anthemsf 006XXXXXXXXXXXXXXX
+./bin/anthemPlayer.sh anthemorg 006XXXXXXXXXXXXXXX
 ```
 
 **Note:** The anthemPlayer.sh script:
@@ -64,25 +64,6 @@ To hear the anthem audio locally, you can use the anthemPlayer.sh script which m
 - Opens the HTML player in your browser
 
 The HTML player loads this data via a script tag, so no HTTP server is required for playback. You can open the HTML file directly in your browser and it will work immediately.
-
-### Data Management Script
-The `bin/data.sh` script provides a convenient way to manage sample data in your scratch org:
-
-**Usage:**
-```bash
-# Import all sample data (default behavior)
-./bin/data.sh
-
-# Clean up existing data before import
-./bin/data.sh -cleanup
-```
-
-**What it does:**
-- Automatically queries the standard price book ID and updates pricebook entries
-- Imports all sample data (accounts, products, opportunities, opportunity line items, pricebook entries)
-- Provides verification counts of imported data
-- Handles temporary file management and cleanup
-- Can optionally remove existing data before import
 
 ## Deployment
 

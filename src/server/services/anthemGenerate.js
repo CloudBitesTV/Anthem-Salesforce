@@ -100,7 +100,6 @@ export async function generateAnthem(request, client) {
     }
 
     // Query opportunity line items
-    let opportunityLineItemTuples = [];
     const oliFields = ANTHEM_CONFIG.opportunityLineItemFields.join(', ');
     const oliSoql = `SELECT Id, ${oliFields} FROM OpportunityLineItem WHERE OpportunityId = '${opportunityId}' ORDER BY SortOrder, Id LIMIT 10`;
     const oliResult = await executeQuery(dataApi, oliSoql, 'opportunity line items');
@@ -267,7 +266,7 @@ function smooth(vector, variance) {
 
   const smoothed = vector.map( (element, index) => {
     const previous = index > 0 ? vector[index-1] : element;
-    const next = index < vector.length ? element : vector[i-1];
+    const next = index < vector.length ? element : vector[index-1];
     return avg([v_avg, avg([previous, element, next])]);
   });
 
