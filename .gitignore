@@ -61,3 +61,6 @@ config/user
 
 # ApexStubs generated files
 bin/apexstubs/downloads/
+
+# AnthemPlayer generated files
+bin/anthemPlayer/anthemData.js
